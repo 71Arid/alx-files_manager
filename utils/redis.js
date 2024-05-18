@@ -16,9 +16,10 @@ class RedisClient {
     try {
       this.redcli.ping();
       return true;
-    } catch (_err) {
-      return false;
+    } catch (err) {
+      console.error(err);
     }
+    return false;
   }
 
   async get(key) {
