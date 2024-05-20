@@ -4,7 +4,7 @@ import redisClient from '../utils/redis';
 class AppController {
   static getStatus(_req, res) {
     if (dbClient.isAlive() && redisClient.isAlive()) {
-      res.status(200).json({ redis: true, db: true });
+      res.status(200).json({redis: true, db: true});
     }
   }
 
@@ -12,7 +12,7 @@ class AppController {
     if (dbClient.isAlive()) {
       const users = await dbClient.nbUsers();
       const files = await dbClient.nbFiles();
-      res.json({ users: `${users}`, files: `${files}` });
+      res.json({users: users, files: files});
     }
   }
 }
