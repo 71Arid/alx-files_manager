@@ -7,7 +7,7 @@ const client = new MongoClient(uri, { useUnifiedTopology: true });
 
 class UsersController {
   static async postNew(req, res) {
-    const { email, password } = req.body || null;
+    const { email, password } = req.body;
     let newUser;
     if (!email) {
       return res.status(400).send({ error: 'Missing email' });
