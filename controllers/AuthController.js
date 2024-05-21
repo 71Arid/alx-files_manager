@@ -14,7 +14,7 @@ class AuthController {
       const emailToken = AuthController.base64encode(authorization);
       const [email, password] = emailToken.split(':');
       if (!email || !password) {
-        throw new Error('Invalid authorization format');
+        return res.status(401).json({ error: 'Unauthorized' });
       }
       await client.connect();
       const database = client.db('files_manager');
