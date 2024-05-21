@@ -20,7 +20,7 @@ class UsersController {
       const database = client.db('files_manager');
       const users = database.collection('users');
       const user = await users.findOne({ email });
-      if (user) {
+      if (user.email == email) {
         return res.status(400).json({ error: 'Already exists' });
       }
       const pwd = UsersController.hashpassword(password);
