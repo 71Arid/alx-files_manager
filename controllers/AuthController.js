@@ -1,6 +1,7 @@
 const { MongoClient } = require('mongodb');
 const { Buffer } = require('buffer');
 const uuid = require('uuid');
+const crypto = require('crypto');
 const redisClient = require('../utils/redis');
 
 const uri = 'mongodb://localhost:27017';
@@ -14,14 +15,14 @@ class AuthController {
       const emailToken = AuthController.base64encode(authorization);
       const [email, password] = emailToken.split(':');
       if (!email || !password) {
-        return res.status(401).json({ error: 'Unauthorized' });
+        throw new Error('Invalid authorization format');
       }
       await client.connect();
       const database = client.db('files_manager');
       const users = database.collection('users');
       const user = await users.findOne({ email });
-      const userPassword = Buffer.from(user.password, 'base64').toString();
-      if (userPassword != password) {
+      const hashpassword = crypto.createHash('sha1').update(password).digest('hex');
+      if (hashpassword !== user.password) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
       if (user == null) {
