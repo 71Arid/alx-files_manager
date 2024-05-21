@@ -42,7 +42,7 @@ class UsersController {
       const database = client.db('files_manager');
       const users = database.collection('users');
       const user = await users.findOne({ _id: new ObjectId(userId) });
-      if (!user) {
+      if (user == null) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
       foundUser = user;

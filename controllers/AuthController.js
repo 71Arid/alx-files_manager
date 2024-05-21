@@ -20,7 +20,7 @@ class AuthController {
       const database = client.db('files_manager');
       const users = database.collection('users');
       const user = await users.findOne({ email });
-      if (!user) {
+      if (user == null) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
       const token = uuid.v4();
