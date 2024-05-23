@@ -4,6 +4,7 @@ const uuid = require('uuid');
 const path = require('path');
 const redisClient = require('../utils/redis');
 const { error } = require('console');
+const { use } = require('chai');
 
 const uri = 'mongodb://localhost:27017';
 const client = new MongoClient(uri, { useUnifiedTopology: true });
@@ -95,11 +96,11 @@ class FilesController {
       if (!user) {
         return res.status(401).json({ error: 'Unauthorized'});
       }
-      const userFiles = await files.findOne({ id });
+      const userFiles = await files.find({ _id: ObjectId(id), userId: ObjectId(userId) }).toArray();
       if (!userFiles) {
         return res.status(401).json({ error: 'Not found'});
       }
-      return res.status(201).json({ ...userFiles });
+      return res.status(201).json(userFiles);
     } catch (error) {
       console.error(error);
     }
@@ -123,11 +124,14 @@ class FilesController {
       if (!user) {
         return res.status(401).json({ error: 'Unauthorized'});
       }
-      const paginatedFiles = await files.aggregate([
-        { $match: { userId, parentId }},
-        { $skip: skip },
-        { $limit: pageSize},
-      ]).toArray();
+      const query = { userId: new ObjectId(userId) };
+      if (parentId !== '0') {
+        query.parentId = new ObjectId(parentId);
+      } else {
+        query.parentId = 0;
+      }
+
+      const paginatedFiles = await files.find(query).skip(skip).limit(pageSize).toArray();
       return res.status(200).json(paginatedFiles);
     } catch (error) {
       console.error(error);
