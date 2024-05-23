@@ -3,6 +3,7 @@ const fs = require('fs');
 const uuid = require('uuid');
 const path = require('path');
 const redisClient = require('../utils/redis');
+const { error } = require('console');
 
 const uri = 'mongodb://localhost:27017';
 const client = new MongoClient(uri, { useUnifiedTopology: true });
@@ -77,6 +78,59 @@ class FilesController {
       });
     } catch (err) {
       console.error(err);
+    }
+    return 0;
+  }
+
+  static async getShow(req, res) {
+    try {
+      const { id } = req.params;
+      const token = req.headers['x-token'];
+      const userId = await redisClient.get(`auth_${token}`);
+      await client.connect();
+      const database = client.db('files_manager');
+      const files = database.collection('files');
+      const users = database.collection('users');
+      const user = await users.findOne({ _id: new ObjectId(userId) });
+      if (!user) {
+        return res.status(401).json({ error: 'Unauthorized'});
+      }
+      const userFiles = await files.findOne({ id });
+      if (!userFiles) {
+        return res.status(401).json({ error: 'Not found'});
+      }
+      return res.status(201).json({ ...userFiles });
+    } catch (error) {
+      console.error(error);
+    }
+    return 0;
+  }
+
+  static async getIndex(req, res) {
+    try {
+      const parentId = req.query.parentId ? req.query.parentId : '0';
+      const page = req.query.page ? parseInt(req.query.page, 10) : 0;
+      const pageSize = 20;
+      const skip = page * pageSize;
+
+      const token = req.headers['x-token'];
+      const userId = await redisClient.get(`auth_${token}`);
+      await client.connect();
+      const database = client.db('files_manager');
+      const files = database.collection('files');
+      const users = database.collection('users');
+      const user = await users.findOne({ _id: new ObjectId(userId) });
+      if (!user) {
+        return res.status(401).json({ error: 'Unauthorized'});
+      }
+      const paginatedFiles = await files.aggregate([
+        { $match: { userId, parentId }},
+        { $skip: skip },
+        { $limit: pageSize},
+      ]).toArray();
+      return res.status(200).json(paginatedFiles);
+    } catch (error) {
+      console.error(error);
     }
     return 0;
   }
