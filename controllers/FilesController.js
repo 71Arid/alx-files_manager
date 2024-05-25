@@ -3,8 +3,6 @@ const fs = require('fs');
 const uuid = require('uuid');
 const path = require('path');
 const redisClient = require('../utils/redis');
-const { error } = require('console');
-const { use } = require('chai');
 
 const uri = 'mongodb://localhost:27017';
 const client = new MongoClient(uri, { useUnifiedTopology: true });
@@ -94,11 +92,11 @@ class FilesController {
       const users = database.collection('users');
       const user = await users.findOne({ _id: new ObjectId(userId) });
       if (!user) {
-        return res.status(401).json({ error: 'Unauthorized'});
+        return res.status(401).json({ error: 'Unauthorized' });
       }
       const userFiles = await files.find({ _id: ObjectId(id), userId: ObjectId(userId) }).toArray();
       if (!userFiles) {
-        return res.status(401).json({ error: 'Not found'});
+        return res.status(401).json({ error: 'Not found' });
       }
       return res.status(201).json(userFiles);
     } catch (error) {
@@ -122,7 +120,7 @@ class FilesController {
       const users = database.collection('users');
       const user = await users.findOne({ _id: new ObjectId(userId) });
       if (!user) {
-        return res.status(401).json({ error: 'Unauthorized'});
+        return res.status(401).json({ error: 'Unauthorized' });
       }
       const query = { userId: new ObjectId(userId) };
       if (parentId !== '0') {
@@ -150,9 +148,11 @@ class FilesController {
       const users = database.collection('users');
       const user = await users.findOne({ _id: new ObjectId(userId) });
       if (!user) {
-        return res.status(401).json({ error: 'Unauthorized'});
+        return res.status(401).json({ error: 'Unauthorized' });
       }
-      const result = await files.updateOne({ _id: ObjectId(id), userId: ObjectId(userId) }, { $set: { isPublic: true } });
+      const result = await files.updateOne(
+        { _id: ObjectId(id), userId: ObjectId(userId) }, { $set: { isPublic: true } },
+      );
       if (result.matchedCount === 0) {
         return res.status(404).json({ error: 'Not found' });
       }
@@ -175,9 +175,11 @@ class FilesController {
       const users = database.collection('users');
       const user = await users.findOne({ _id: new ObjectId(userId) });
       if (!user) {
-        return res.status(401).json({ error: 'Unauthorized'});
+        return res.status(401).json({ error: 'Unauthorized' });
       }
-      const result = await files.updateOne({ _id: ObjectId(id), userId: ObjectId(userId) }, { $set: { isPublic: false } });
+      const result = await files.updateOne(
+        { _id: ObjectId(id), userId: ObjectId(userId) }, { $set: { isPublic: false } },
+      );
       if (result.matchedCount === 0) {
         return res.status(404).json({ error: 'Not found' });
       }
