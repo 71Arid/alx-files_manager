@@ -138,6 +138,56 @@ class FilesController {
     }
     return 0;
   }
+
+  static async putPublish(req, res) {
+    try {
+      const { id } = req.params;
+      const token = req.headers['x-token'];
+      const userId = await redisClient.get(`auth_${token}`);
+      await client.connect();
+      const database = client.db('files_manager');
+      const files = database.collection('files');
+      const users = database.collection('users');
+      const user = await users.findOne({ _id: new ObjectId(userId) });
+      if (!user) {
+        return res.status(401).json({ error: 'Unauthorized'});
+      }
+      const result = await files.updateOne({ _id: ObjectId(id), userId: ObjectId(userId) }, { $set: { isPublic: true } });
+      if (result.matchedCount === 0) {
+        return res.status(404).json({ error: 'Not found' });
+      }
+      const updatedFile = await files.findOne({ _id: new ObjectId(id) });
+      return res.status(200).json(updatedFile);
+    } catch (error) {
+      console.error(error);
+    }
+    return 0;
+  }
+
+  static async putUnpublish(req, res) {
+    try {
+      const { id } = req.params;
+      const token = req.headers['x-token'];
+      const userId = await redisClient.get(`auth_${token}`);
+      await client.connect();
+      const database = client.db('files_manager');
+      const files = database.collection('files');
+      const users = database.collection('users');
+      const user = await users.findOne({ _id: new ObjectId(userId) });
+      if (!user) {
+        return res.status(401).json({ error: 'Unauthorized'});
+      }
+      const result = await files.updateOne({ _id: ObjectId(id), userId: ObjectId(userId) }, { $set: { isPublic: false } });
+      if (result.matchedCount === 0) {
+        return res.status(404).json({ error: 'Not found' });
+      }
+      const updatedFile = await files.findOne({ _id: new ObjectId(id) });
+      return res.status(200).json(updatedFile);
+    } catch (error) {
+      console.error(error);
+    }
+    return 0;
+  }
 }
 
 module.exports = FilesController;
