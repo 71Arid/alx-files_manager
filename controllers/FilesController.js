@@ -4,6 +4,14 @@ const uuid = require('uuid');
 const path = require('path');
 const redisClient = require('../utils/redis');
 const mime = require('mime-types');
+const Bull = require('bull');
+
+const fileQueue = new Bull('fileQueue', {
+  redis: {
+    host: 'localhost',
+    port: 6379,
+  },
+});
 
 const uri = 'mongodb://localhost:27017';
 const client = new MongoClient(uri, { useUnifiedTopology: true });
@@ -72,6 +80,11 @@ class FilesController {
       fileDocument.localPath = filePath;
       const { localPath, ...newObj } = fileDocument;
       const result = await database.collection('files').insertOne(fileDocument);
+
+      if (type === 'image') {
+        await fileQueue.add({ userId: user._id.toString(), fileId: result.insertedId.toString() });
+      }
+
       return res.status(201).json({
         id: result.insertedId,
         ...newObj,
@@ -195,6 +208,7 @@ class FilesController {
   static async getFile(req, res) {
     try {
       const { id } = req.params;
+      const size = req.query.size;
       const token = req.headers['x-token'];
       const userId = await redisClient.get(`auth_${token}`);
       await client.connect();
@@ -216,6 +230,15 @@ class FilesController {
         return res.status(404).json({ error: 'Not found' });
       }
       const filePath = userFiles.localPath;
+
+      if (size) {
+        const validSizes = ['100', '250', '500'];
+        if (!validSizes.includes(size)) {
+          return res.status(400).json({ error: 'Invalid size parameter' });
+        }
+        filePath = `${userFiles.localPath}_${size}`;
+      }
+      
       if (!fs.existsSync(filePath)) {
         return res.status(404).json({ error: 'Not found' });
       }
